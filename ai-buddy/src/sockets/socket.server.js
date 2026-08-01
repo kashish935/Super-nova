@@ -7,7 +7,7 @@ const agent = require('../agent/agent');
 async function initSocketServer(httpServer) {
 
     const io = new Server(httpServer, {
-        // path: "/api/socket/socket.io/",
+        path: "/api/socket/socket.io/", // since working with alb we need a path to work it with socketio and alb together.
     })
 
     //middleware to authenticate the socket connection using JWT token from cookies

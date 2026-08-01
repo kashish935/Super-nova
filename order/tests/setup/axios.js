@@ -5,7 +5,7 @@ const MockAdapter = require('axios-mock-adapter');
 const mock = new MockAdapter(axios);
 
 // Mock cart service responses
-mock.onGet('http://localhost:3002/api/cart').reply(() => {
+mock.onGet('http://nova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/cart').reply(() => {
     return [200, {
         cart: {
             items: [
