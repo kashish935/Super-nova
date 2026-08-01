@@ -6,11 +6,18 @@ const paymentModel = require("../models/payment.model")
 
 module.exports = async function () {
     subscribeToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", async (user) => {
+        try {
         await userModel.findOneAndUpdate(
-            { _id: user._id }, 
-            { $set: user }, 
-            { upsert: true, new: true }
+            { email: user.email },
+            { $set: user },
+            {
+                upsert: true,
+                returnDocument: "after"
+            }
         );
+    } catch (err) {
+        console.error(err);
+    }
     })
 
     subscribeToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", async (product) => {
