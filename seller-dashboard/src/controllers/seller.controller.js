@@ -9,7 +9,7 @@ async function getMetrics(req, res) {
         const seller = req.user;
 
         // Get all products for this seller
-        const products = await productModel.find({ seller: seller._id });
+        const products = await productModel.find({ seller: seller.id });
         const productIds = products.map(p => p._id);
 
         // Get all orders containing seller's products
@@ -25,7 +25,7 @@ async function getMetrics(req, res) {
 
         orders.forEach(order => {
             order.items.forEach(item => {
-                if (productIds.includes(item.product)) {
+                if (productIds.some(id => id.equals(item.product))) {
                     sales += item.quantity;
                     revenue += item.price.amount * item.quantity;
                     productSales[ item.product ] = (productSales[ item.product ] || 0) + item.quantity;
@@ -61,17 +61,17 @@ async function getOrders(req, res) {
         const seller = req.user;
 
         // Get all products for this seller
-        const products = await productModel.find({ seller: seller._id });
+        const products = await productModel.find({ seller: seller.id });
         const productIds = products.map(p => p._id);
 
         // Get all orders containing seller's products
         const orders = await orderModel.find({
             'items.product': { $in: productIds }
-        }).populate('user', 'name email').sort({ createdAt: -1 });
+        }).populate({ path: 'user', model: userModel, select: 'username email fullName' }).sort({ createdAt: -1 });
 
         // Filter order items to only include those from this seller
         const filteredOrders = orders.map(order => {
-            const filteredItems = order.items.filter(item => productIds.includes(item.product));
+            const filteredItems = order.items.filter(item => productIds.some(id => id.equals(item.product)));
             return {
                 ...order.toObject(),
                 items: filteredItems
@@ -86,12 +86,52 @@ async function getOrders(req, res) {
     }
 }
 
+async function getOrderById(req, res) {
+    try {
+        const seller = req.user;
+        const { id } = req.params;
+
+        const products = await productModel.find({ seller: seller.id });
+        const productIds = products.map(p => p._id);
+
+        const order = await orderModel
+            .findById(id)
+            .populate({ path: 'user', model: userModel, select: 'username email fullName' });
+
+        if (!order) {
+            console.warn(`[getOrderById] no order found for id=${id}`);
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        const filteredItems = order.items.filter(item => productIds.some(pid => pid.equals(item.product)));
+
+        if (filteredItems.length === 0) {
+            console.warn(`[getOrderById] order ${id} found but none of its ${order.items.length} item(s) matched seller ${seller.id}'s ${productIds.length} product(s)`);
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        return res.json({
+            ...order.toObject(),
+            items: filteredItems
+        });
+    } catch (error) {
+        if (error.name === 'CastError') {
+            console.warn(`[getOrderById] invalid order id format: ${req.params.id}`);
+            return res.status(404).json({ message: "Order not found" });
+        }
+        console.error("Error fetching order:", error)
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+}
+
 async function getProducts(req, res) {
 
     try {
         const seller = req.user;
 
-        const products = await productModel.find({ seller: seller._id }).sort({ createdAt: -1 });
+        const products = await productModel.find({ seller: seller.id }).sort({ createdAt: -1 });
 
         return res.json(products);
     } catch (error) {
@@ -106,5 +146,6 @@ async function getProducts(req, res) {
 module.exports = {
     getMetrics,
     getOrders,
+    getOrderById,
     getProducts
 }

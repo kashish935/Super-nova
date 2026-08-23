@@ -10,6 +10,9 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Local dev default matches the order service's own hardcoded app.listen() port.
+const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://localhost:3003';
+
 
 async function createPayment(req, res) {
     const token = req.cookies?.token || req.headers?.authorization?.split(' ')[ 1 ];
@@ -18,7 +21,7 @@ async function createPayment(req, res) {
 
         const orderId = req.params.orderId;
 
-        const orderResponse = await axios.get("http://lnova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/orders/" + orderId, {
+        const orderResponse = await axios.get(`${ORDER_SERVICE_URL}/api/orders/` + orderId, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

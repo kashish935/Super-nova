@@ -54,7 +54,8 @@ async function registerUser(req,res){
 
     res.cookie('token',token ,{
         httpOnly:true,
-        secure :true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000 //1 day
     })
 
@@ -102,7 +103,8 @@ async function loginUser(req, res) {
 
         res.cookie('token', token, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 24 * 60 * 60 * 1000,
         });
 
@@ -144,7 +146,8 @@ async function logoutUser(req, res) {
 
     res.clearCookie('token', {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     return res.status(200).json({ message: "Logged out successfully" });
@@ -232,6 +235,77 @@ async function deleteUserAddress(req, res) {
 }
 
 
+async function updateProfile(req, res) {
+    try {
+        const id = req.user.id;
+        const { username, email, fullName, currentPassword, newPassword } = req.body;
+
+        const user = await userModel.findById(id).select('+password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (username || email) {
+            const clash = await userModel.findOne({
+                _id: { $ne: id },
+                $or: [
+                    ...(username ? [ { username } ] : []),
+                    ...(email ? [ { email } ] : []),
+                ]
+            });
+            if (clash) {
+                return res.status(409).json({ message: 'Username or email already in use' });
+            }
+        }
+
+        if (newPassword) {
+            const isMatch = await bcrypt.compare(currentPassword, user.password || '');
+            if (!isMatch) {
+                return res.status(401).json({ message: 'Current password is incorrect' });
+            }
+            user.password = await bcrypt.hash(newPassword, 10);
+        }
+
+        if (username) user.username = username;
+        if (email) user.email = email;
+        if (fullName?.firstName) user.fullName.firstName = fullName.firstName;
+        if (fullName?.lastName) user.fullName.lastName = fullName.lastName;
+
+        await user.save();
+
+        // username/email/role are embedded in the JWT, so reissue it to stay in sync.
+        const token = jwt.sign({
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        return res.status(200).json({
+            message: 'Profile updated successfully',
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+                addresses: user.addresses
+            }
+        });
+    } catch (err) {
+        console.error('Error in updateProfile:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
 module.exports = {
     registerUser,
     loginUser,
@@ -239,5 +313,6 @@ module.exports = {
     logoutUser,
     getUserAddresses,
     addUserAddress,
-    deleteUserAddress
+    deleteUserAddress,
+    updateProfile
 }

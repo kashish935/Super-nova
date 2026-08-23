@@ -4,6 +4,10 @@ const orderModel = require("../models/order.model")
 const axios = require("axios")
 const { publishToQueue } = require("../broker/borker");
 
+// Local dev defaults match each service's own hardcoded app.listen() port.
+const CART_SERVICE_URL = process.env.CART_SERVICE_URL || 'http://localhost:3002';
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:3001';
+
 
 async function createOrder(req, res) {
 
@@ -13,7 +17,7 @@ async function createOrder(req, res) {
     try {
 
         // fetch user cart from cart service
-        const cartResponse = await axios.get(`http://nova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/cart`, {
+        const cartResponse = await axios.get(`${CART_SERVICE_URL}/api/cart`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -23,7 +27,7 @@ async function createOrder(req, res) {
 
         const products = await Promise.all(cartResponse.data.cart.items.map(async (item) => {
 
-            return (await axios.get(`http://nova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/products/${item.productId}`, {
+            return (await axios.get(`${PRODUCT_SERVICE_URL}/api/products/${item.productId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -79,6 +83,22 @@ async function createOrder(req, res) {
         })
 
         await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order)
+
+        // Decrement stock for each ordered product. Best-effort: the order itself is already
+        // placed, so a failure here is logged rather than rolling back the order.
+        await Promise.all(orderItems.map(async (item) => {
+            try {
+                await axios.patch(`${PRODUCT_SERVICE_URL}/api/products/${item.product}/stock`, {
+                    quantity: item.quantity
+                }, {
+                    headers: {
+                        'x-internal-secret': process.env.INTERNAL_SERVICE_SECRET
+                    }
+                })
+            } catch (stockErr) {
+                console.error(`Failed to decrement stock for product ${item.product}:`, stockErr.message)
+            }
+        }))
 
         res.status(201).json({ order })
 
@@ -160,6 +180,11 @@ async function cancelOrderById(req, res) {
 
         order.status = "CANCELLED";
         await order.save();
+
+        await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_STATUS_UPDATED", {
+            orderId: order._id,
+            status: order.status
+        });
 
         res.status(200).json({ order });
     } catch (err) {

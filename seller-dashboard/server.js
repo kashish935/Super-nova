@@ -16,6 +16,6 @@ connect().then(() => {
 
 
 
-app.listen(3007, () => {
+app.listen(process.env.PORT || 3007, () => {
     console.log('Seller server is running on port 3007');
 })

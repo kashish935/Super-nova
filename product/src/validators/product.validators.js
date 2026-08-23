@@ -32,6 +32,10 @@ const createProductValidators = [
         .optional()
         .isIn([ 'USD', 'INR' ])
         .withMessage('priceCurrency must be USD or INR'),
+    body('stock')
+        .optional()
+        .isInt({ min: 0 })
+        .withMessage('stock must be a non-negative integer'),
     handleValidationErrors
 ];
 

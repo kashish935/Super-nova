@@ -14,6 +14,8 @@ router.post('/login', validators.loginUserValidations, authController.loginUser)
 // // GET /api/auth/me
 router.get('/me', authMiddleware.authMiddleware, authController.getCurrentUser);
 
+router.patch('/me', validators.updateProfileValidations, authMiddleware.authMiddleware, authController.updateProfile);
+
 router.get("/logout", authController.logoutUser);
 
 

@@ -28,6 +28,10 @@ module.exports = async function () {
         await orderModel.create(order)
     })
 
+    subscribeToQueue("ORDER_SELLER_DASHBOARD.ORDER_STATUS_UPDATED", async ({ orderId, status }) => {
+        await orderModel.findByIdAndUpdate(orderId, { status });
+    })
+
     subscribeToQueue("PAYMENT_SELLER_DASHBOARD.PAYMENT_CREATED", async (payment) => {
         await paymentModel.create(payment)
     })

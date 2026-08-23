@@ -8,7 +8,7 @@ const { publishToQueue } = require("../broker/borker")
 // Accepts multipart/form-data with fields: title, description, priceAmount, priceCurrency, images[] (files)
 async function createProduct(req, res) {
     try {
-        const { title, description, priceAmount, priceCurrency = 'INR' } = req.body;
+        const { title, description, priceAmount, priceCurrency = 'INR', stock } = req.body;
         const seller = req.user.id; // Extract seller from authenticated user
 
         const price = {
@@ -19,7 +19,14 @@ async function createProduct(req, res) {
         const images = await Promise.all((req.files || []).map(file => uploadImage({ buffer: file.buffer })));
 
 
-        const product = await productModel.create({ title, description, price, seller, images });
+        const product = await productModel.create({
+            title,
+            description,
+            price,
+            seller,
+            images,
+            stock: stock !== undefined ? Number(stock) : 0
+        });
 
         await publishToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
         await publishToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
@@ -103,7 +110,7 @@ async function updateProduct(req, res) {
         return res.status(403).json({ message: 'Forbidden: You can only update your own products' });
     }
 
-    const allowedUpdates = [ 'title', 'description', 'price' ];
+    const allowedUpdates = [ 'title', 'description', 'price', 'stock' ];
     for (const key of Object.keys(req.body)) {
         if (allowedUpdates.includes(key)) {
             if (key === 'price' && typeof req.body.price === 'object') {
@@ -113,6 +120,8 @@ async function updateProduct(req, res) {
                 if (req.body.price.currency !== undefined) {
                     product.price.currency = req.body.price.currency;
                 }
+            } else if (key === 'stock') {
+                product.stock = Math.max(0, Number(req.body.stock));
             } else {
                 product[ key ] = req.body[ key ];
             }
@@ -160,4 +169,34 @@ async function getProductsBySeller(req, res) {
     return res.status(200).json({ data: products });
 }
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getProductsBySeller };
+async function decrementStock(req, res) {
+
+    const secret = req.headers[ 'x-internal-secret' ];
+    if (!process.env.INTERNAL_SERVICE_SECRET || secret !== process.env.INTERNAL_SERVICE_SECRET) {
+        return res.status(401).json({ message: 'Unauthorized: invalid internal service secret' });
+    }
+
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid product id' });
+    }
+
+    if (!Number.isFinite(Number(quantity)) || Number(quantity) <= 0) {
+        return res.status(400).json({ message: 'quantity must be a positive number' });
+    }
+
+    const product = await productModel.findById(id);
+
+    if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+    }
+
+    product.stock = Math.max(0, product.stock - Number(quantity));
+    await product.save();
+
+    return res.status(200).json({ message: 'Stock updated', data: product });
+}
+
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getProductsBySeller, decrementStock };

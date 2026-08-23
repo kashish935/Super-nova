@@ -25,6 +25,10 @@ router.get('/', productController.getProducts)
 router.patch("/:id", createAuthMiddleware([ "seller" ]), productController.updateProduct);
 router.delete("/:id", createAuthMiddleware([ "seller" ]), productController.deleteProduct);
 
+// Internal, service-to-service only (order service calls this after an order is placed).
+// Protected by a shared secret header instead of a user JWT since there is no end user on this call.
+router.patch("/:id/stock", productController.decrementStock);
+
 
 router.get("/seller", createAuthMiddleware([ "seller" ]), productController.getProductsBySeller);
 

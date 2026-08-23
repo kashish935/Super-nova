@@ -6,6 +6,6 @@ const { connect } = require('./src/broker/borker');
 connectDB();
 connect();
 
-app.listen(3004, () => {
+app.listen(process.env.PORT || 3004, () => {
     console.log('Payment service is running on port 3004');
 })

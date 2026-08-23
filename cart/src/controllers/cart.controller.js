@@ -70,7 +70,6 @@ async function updateItemQuantity(req, res) {
     res.status(200).json({ message: 'Item updated', cart });
 }
 
-/*
 async function removeItemFromCart(req, res) {
     const { productId } = req.params;
     const user = req.user;
@@ -105,12 +104,11 @@ async function clearCart(req, res) {
 
     res.status(200).json({ message: 'Cart cleared', cart });
 }
-*/
 
 module.exports = {
     addItemToCart,
     updateItemQuantity,
-    // removeItemFromCart,
-    // clearCart,
+    removeItemFromCart,
+    clearCart,
     getCart
 };

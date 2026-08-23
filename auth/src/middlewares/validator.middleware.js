@@ -103,8 +103,43 @@ const addUserAddressValidations = [
     respondWithValidationErrors,
 ]
 
+const updateProfileValidations = [
+    body('username')
+        .optional()
+        .isString()
+        .withMessage('Username must be a string')
+        .isLength({ min: 3 })
+        .withMessage('Username must be at least 3 characters long'),
+    body('email')
+        .optional()
+        .isEmail()
+        .withMessage('Invalid email address'),
+    body('fullName.firstName')
+        .optional()
+        .isString()
+        .withMessage('First name must be a string')
+        .notEmpty()
+        .withMessage('First name cannot be empty'),
+    body('fullName.lastName')
+        .optional()
+        .isString()
+        .withMessage('Last name must be a string')
+        .notEmpty()
+        .withMessage('Last name cannot be empty'),
+    body('newPassword')
+        .optional()
+        .isLength({ min: 6 })
+        .withMessage('New password must be at least 6 characters long'),
+    body('currentPassword')
+        .if(body('newPassword').exists())
+        .notEmpty()
+        .withMessage('Current password is required to set a new password'),
+    respondWithValidationErrors,
+]
+
 module.exports = {
     registerUserValidations,
     loginUserValidations,
-    addUserAddressValidations
+    addUserAddressValidations,
+    updateProfileValidations
 };
