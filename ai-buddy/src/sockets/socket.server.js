@@ -8,6 +8,10 @@ async function initSocketServer(httpServer) {
 
     const io = new Server(httpServer, {
         path: "/api/socket/socket.io/", // since working with alb we need a path to work it with socketio and alb together.
+        cors: {
+            origin: process.env.CLIENT_URL || 'http://localhost:5173',
+            credentials: true,
+        },
     })
 
     //middleware to authenticate the socket connection using JWT token from cookies

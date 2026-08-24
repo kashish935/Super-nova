@@ -2,11 +2,14 @@ const { tool } = require("@langchain/core/tools")
 const { z } = require("zod")
 const axios = require("axios")
 
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://localhost:3001"
+const CART_SERVICE_URL = process.env.CART_SERVICE_URL || "http://localhost:3002"
+
 const searchProduct = tool(async ({ query, token }) => {
 
     console.log("searchProduct called with data:", { query, token })
 
-    const response = await axios.get(`http://nova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/products?q=${query}`, {
+    const response = await axios.get(`${PRODUCT_SERVICE_URL}/api/products?q=${query}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -27,7 +30,7 @@ const searchProduct = tool(async ({ query, token }) => {
 const addProductToCart = tool(async ({ productId, qty = 1, token }) => {
 
 
-    const response = await axios.post(`http://nova-ALB-1465556720.us-east-1.elb.amazonaws.com/api/cart/items`, {
+    const response = await axios.post(`${CART_SERVICE_URL}/api/cart/items`, {
         productId,
         qty
     }, {

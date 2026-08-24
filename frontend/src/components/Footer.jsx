@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Footer() {
+  const { user } = useAuth();
   return (
     <footer className="mt-24 border-t border-border-soft">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -16,7 +18,7 @@ export default function Footer() {
           <div className="flex gap-8 text-sm text-muted">
             <Link to="/products" className="hover:text-star">Shop</Link>
             <Link to="/orders" className="hover:text-star">Orders</Link>
-            <Link to="/seller/dashboard" className="hover:text-star">Sell on Super Nova</Link>
+            {user?.role !== 'user' && <Link to="/seller/dashboard" className="hover:text-star">Sell on Super Nova</Link>}
           </div>
         </div>
         <p className="mt-8 text-xs text-muted">© {new Date().getFullYear()} Super Nova. All rights reserved.</p>
