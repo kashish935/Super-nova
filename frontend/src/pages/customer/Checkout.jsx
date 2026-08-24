@@ -92,7 +92,10 @@ export default function Checkout() {
 
       const razorpay = new window.Razorpay({
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: payment.price.amount,
+        // payment.price.amount is in rupees (matches the rest of the app's
+        // display convention) — Razorpay's widget needs paise, same as the
+        // amount used when the order was created on the backend.
+        amount: Math.round(payment.price.amount * 100),
         currency: payment.price.currency,
         order_id: payment.razorpayOrderId,
         name: 'Super Nova',

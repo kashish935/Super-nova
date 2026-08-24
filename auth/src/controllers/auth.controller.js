@@ -176,6 +176,37 @@ async function addUserAddress(req, res) {
 
     const { street, city, state, pincode, country, isDefault } = req.body;
 
+    // Skip the insert if this user already has an identical address saved,
+    // so repeated "save new address" calls (e.g. from checkout) don't create duplicates.
+    const existingUser = await userModel.findOne({
+        _id: id,
+        addresses: {
+            $elemMatch: {
+                street,
+                city,
+                state,
+                pincode,
+                country
+            }
+        }
+    });
+
+    if (existingUser) {
+        const duplicate = existingUser.addresses.find(
+            (addr) =>
+                addr.street === street &&
+                addr.city === city &&
+                addr.state === state &&
+                addr.pincode === pincode &&
+                addr.country === country
+        );
+
+        return res.status(200).json({
+            message: "Address already saved",
+            address: duplicate
+        });
+    }
+
     const user = await userModel.findOneAndUpdate({ _id: id }, {
         $push: {
             addresses: {

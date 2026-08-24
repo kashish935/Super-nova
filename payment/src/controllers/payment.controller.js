@@ -28,17 +28,25 @@ async function createPayment(req, res) {
         })
 
 
+        // price.amount is stored and displayed in rupees everywhere in this app
+        // (product, cart, order totals). Razorpay's API requires the amount in
+        // paise (the smallest currency unit) as an integer, so we convert only
+        // right here, at the Razorpay boundary — everything else stays in rupees.
         const price = orderResponse.data.order.totalPrice;
+        const amountInPaise = Math.round(price.amount * 100);
 
-        const order = await razorpay.orders.create(price);
+        const order = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: price.currency
+        });
 
         const payment = await paymentModel.create({
             order: orderId,
             razorpayOrderId: order.id,
             user: req.user.id,
             price: {
-                amount: order.amount,
-                currency: order.currency
+                amount: price.amount,
+                currency: price.currency
             }
         })
 
@@ -47,7 +55,7 @@ async function createPayment(req, res) {
         await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_INITIATED", {
             email: req.user.email,
             orderId: orderId,
-            amount: price.amount / 100,
+            amount: price.amount,
             currency: price.currency,
             username: req.user.username,
         })
@@ -96,7 +104,7 @@ async function verifyPayment(req, res) {
                 email: req.user.email,
                 orderId: payment.order,
                 paymentId: payment.paymentId,
-                amount: payment.price.amount / 100,
+                amount: payment.price.amount,
                 currency: payment.price.currency,
                 fullName: req.user.fullName
             }
@@ -104,6 +112,12 @@ async function verifyPayment(req, res) {
 
 
         await publishToQueue("PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATED", payment)
+
+        // Tell the order service this order's payment is done, so it can
+        // move the order from PENDING to CONFIRMED.
+        await publishToQueue("PAYMENT_ORDER.PAYMENT_COMPLETED", {
+            orderId: payment.order
+        })
 
         res.status(200).json({ message: 'Payment verified successfully', payment });
 

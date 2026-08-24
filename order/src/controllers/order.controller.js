@@ -1,4 +1,3 @@
-
 const { promises } = require("supertest/lib/test");
 const orderModel = require("../models/order.model")
 const axios = require("axios")
@@ -232,10 +231,42 @@ async function updateOrderAddress(req, res) {
     }
 }
 
+// Called by the queue consumer in server.js when a PAYMENT_ORDER.PAYMENT_COMPLETED
+// message arrives — not an HTTP route. Mirrors cancelOrderById's pattern of
+// updating status and notifying the seller dashboard.
+async function confirmOrderPayment({ orderId }) {
+    try {
+        const order = await orderModel.findById(orderId);
+
+        if (!order) {
+            console.warn(`confirmOrderPayment: order ${orderId} not found`);
+            return;
+        }
+
+        // Only move PENDING orders forward — avoids clobbering a CANCELLED
+        // order if cancellation and payment verification race each other.
+        if (order.status !== "PENDING") {
+            console.warn(`confirmOrderPayment: order ${orderId} is ${order.status}, not PENDING — skipping`);
+            return;
+        }
+
+        order.status = "CONFIRMED";
+        await order.save();
+
+        await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_STATUS_UPDATED", {
+            orderId: order._id,
+            status: order.status
+        });
+    } catch (err) {
+        console.error(`confirmOrderPayment failed for order ${orderId}:`, err.message);
+    }
+}
+
 module.exports = {
     createOrder,
     getMyOrders,
     getOrderById,
     cancelOrderById,
-    updateOrderAddress
+    updateOrderAddress,
+    confirmOrderPayment
 }
