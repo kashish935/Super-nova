@@ -33,7 +33,7 @@ export default function Home() {
           className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full opacity-30 blur-3xl"
           style={{ background: 'radial-gradient(circle, #ff3d68 0%, #ff8a3d 45%, transparent 70%)' }}
         />
-        <div className="relative mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">
+        <div className="relative mx-auto max-w-[1600px] px-4 py-24 text-center sm:px-6 lg:px-10">
           <p className="font-mono-price text-xs uppercase tracking-[0.3em] text-muted">A marketplace, launched</p>
           <h1 className="mx-auto mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight text-star sm:text-6xl">
             Everything you need, at <span className="flare-text">supernova</span> speed
@@ -50,7 +50,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-[1600px] px-4 py-16 sm:px-6 lg:px-10">
         <div className="mb-6 flex items-end justify-between">
           <h2 className="font-display text-2xl text-star">Latest arrivals</h2>
           <Link to="/products" className="flare-underline text-sm text-muted">
@@ -59,7 +59,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="skeleton aspect-square rounded-lg" />
             ))}
@@ -69,7 +69,7 @@ export default function Home() {
         ) : products.length === 0 ? (
           <EmptyState title="No products yet" description="Check back soon — new listings land here first." />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}

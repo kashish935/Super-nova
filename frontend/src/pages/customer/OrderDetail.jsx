@@ -77,7 +77,7 @@ export default function OrderDetail() {
         ← My orders
       </Link>
 
-      <div className="mt-4 flex items-start justify-between gap-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl text-star">Order #{order._id.slice(-8).toUpperCase()}</h1>
           <p className="mt-1 text-sm text-muted">Placed {formatDate(order.createdAt)}</p>
@@ -93,8 +93,8 @@ export default function OrderDetail() {
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-surface-raised">
                 {p?.images?.[0]?.url && <img src={p.images[0].url} alt="" className="h-full w-full object-cover" />}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-star">{p?.title || 'Product'}</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm text-star">{p?.title || 'Product'}</p>
                 <p className="mt-1 text-xs text-muted">Qty {item.quantity}</p>
               </div>
               <p className="font-mono-price text-sm text-star">{formatPrice(item.price)}</p>

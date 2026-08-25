@@ -5,7 +5,7 @@ export default function Footer() {
   const { user } = useAuth();
   return (
     <footer className="mt-24 border-t border-border-soft">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <span className="font-display text-lg font-semibold text-star">

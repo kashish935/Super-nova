@@ -43,7 +43,7 @@ export default function SellerProducts() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl text-star">Your products</h1>
         <Link
           to="/seller/products/new"
@@ -78,8 +78,8 @@ export default function SellerProducts() {
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-star">{p.title}</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm text-star">{p.title}</p>
                 <p className="mt-1 text-xs text-muted">
                   {formatPrice(p.price)} · {p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}
                 </p>

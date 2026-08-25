@@ -44,22 +44,27 @@ async function initSocketServer(httpServer) {
 
         console.log(socket.user, socket.token)
 
+        // Per-connection conversation history so the agent has context across turns
+        // (e.g. "add the first one to my cart" after a prior search).
+        const history = [];
 
         //listen for messages from the client and invoke the agent with the message and token
         socket.on('message', async (data) => {
 
+            history.push({ role: "user", content: data });
+
             const agentResponse = await agent.invoke({
-                messages: [
-                    {
-                        role: "user",
-                        content: data
-                    }
-                ]
+                messages: history
             }, {
                 metadata: {
                     token: socket.token
                 }
             })
+
+            // Keep our running history in sync with everything the agent produced
+            // (assistant replies and any tool-call messages), not just the last one.
+            history.length = 0;
+            history.push(...agentResponse.messages);
 
             const lastMessage = agentResponse.messages[ agentResponse.messages.length - 1 ]
 

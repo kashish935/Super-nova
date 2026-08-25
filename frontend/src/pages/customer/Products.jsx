@@ -63,15 +63,15 @@ export default function Products() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl text-star">{q ? `Results for "${q}"` : 'All products'}</h1>
+    <div className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="break-words font-display text-2xl text-star">{q ? `Results for "${q}"` : 'All products'}</h1>
           <p className="mt-1 text-sm text-muted">{loading ? 'Searching…' : `${products.length} shown`}</p>
         </div>
         <button
           onClick={() => setFiltersOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-full border border-border-soft px-4 py-2 text-sm text-star hover:border-flare-hot/50"
+          className="flex shrink-0 items-center gap-2 rounded-full border border-border-soft px-4 py-2 text-sm text-star hover:border-flare-hot/50"
         >
           <SlidersHorizontal size={14} /> Price
         </button>
@@ -106,7 +106,7 @@ export default function Products() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="skeleton aspect-square rounded-lg" />
           ))}
@@ -117,7 +117,7 @@ export default function Products() {
         <EmptyState title="No products found" description="Try a different search or clear your filters." />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}

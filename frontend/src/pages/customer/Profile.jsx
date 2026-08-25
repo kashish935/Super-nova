@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Trash2, Pencil, X } from 'lucide-react';
+import { Trash2, Pencil, X, Sun, Moon, MonitorSmartphone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { authService } from '../../api/auth';
 import { getErrorMessage } from '../../api/client';
 
 const emptyAddress = { street: '', city: '', state: '', pincode: '', country: '' };
 
+const THEME_OPTIONS = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: MonitorSmartphone },
+];
+
 export default function Profile() {
   const { user, refreshUser } = useAuth();
+  const { preference, setTheme } = useTheme();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyAddress);
@@ -113,20 +121,20 @@ export default function Profile() {
       <div className="mt-6 rounded-lg border border-border-soft p-5">
         {!editingAccount ? (
           <>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-star">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="break-words text-sm text-star">
                   {user?.fullName?.firstName} {user?.fullName?.lastName}
                 </p>
-                <p className="mt-1 text-sm text-muted">{user?.email}</p>
-                <p className="mt-1 text-sm text-muted">@{user?.username}</p>
+                <p className="mt-1 break-words text-sm text-muted">{user?.email}</p>
+                <p className="mt-1 break-words text-sm text-muted">@{user?.username}</p>
                 <span className="mt-3 inline-block rounded-full border border-border-soft px-3 py-1 text-xs capitalize text-muted">
                   {user?.role}
                 </span>
               </div>
               <button
                 onClick={() => setEditingAccount(true)}
-                className="flex items-center gap-1.5 text-sm text-muted hover:text-star"
+                className="flex shrink-0 items-center gap-1.5 text-sm text-muted hover:text-star"
               >
                 <Pencil size={14} /> Edit
               </button>
@@ -224,6 +232,32 @@ export default function Profile() {
       </div>
 
       <div className="mt-8">
+        <h2 className="font-display text-lg text-star">Appearance</h2>
+        <p className="mt-1 text-sm text-muted">Choose how Super Nova looks on this device.</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
+            const active = preference === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                aria-pressed={active}
+                className={`flex min-w-[6rem] flex-1 flex-col items-center gap-2 rounded-lg border px-4 py-3 text-sm transition-colors ${
+                  active
+                    ? 'border-flare-hot/60 bg-surface text-star'
+                    : 'border-border-soft text-muted hover:border-flare-hot/40 hover:text-star'
+                }`}
+              >
+                <Icon size={18} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-lg text-star">Saved addresses</h2>
           <button onClick={() => setShowForm((v) => !v)} className="text-sm text-muted flare-underline">
@@ -263,10 +297,10 @@ export default function Profile() {
           <div className="flex flex-col gap-3">
             {addresses.map((addr) => (
               <div key={addr._id} className="flex items-start justify-between gap-3 rounded-lg border border-border-soft p-4">
-                <p className="text-sm text-star">
+                <p className="min-w-0 break-words text-sm text-star">
                   {addr.street}, {addr.city}, {addr.state} {addr.pincode}, {addr.country}
                 </p>
-                <button onClick={() => handleDelete(addr._id)} className="text-muted hover:text-flare-hot">
+                <button onClick={() => handleDelete(addr._id)} className="shrink-0 text-muted hover:text-flare-hot">
                   <Trash2 size={16} />
                 </button>
               </div>

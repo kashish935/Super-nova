@@ -23,12 +23,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout();
     setMenuOpen(false);
+    setMobileOpen(false);
     navigate('/');
   };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border-soft bg-ink/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-[1600px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-10">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <span className="font-display text-xl font-semibold tracking-tight text-star">
             Super<span className="flare-text">Nova</span>

@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { LayoutDashboard, Package, PlusCircle, ClipboardList, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, ClipboardList, User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
@@ -14,20 +15,66 @@ const navItems = [
 export default function SellerLayout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
+    setMobileOpen(false);
     navigate('/');
   };
 
   return (
-    <div className="flex min-h-screen bg-ink">
+    <div className="flex min-h-screen flex-col bg-ink md:flex-row">
       <Toaster
         position="top-right"
         toastOptions={{
           style: { background: '#1b1b29', color: '#f5f3ff', border: '1px solid #26263a', fontSize: '14px' },
         }}
       />
+
+      {/* Mobile top bar — the sidebar below is desktop-only, so phones/tablets need this instead. */}
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border-soft bg-ink/90 px-4 py-3 backdrop-blur md:hidden">
+        <div>
+          <span className="font-display text-lg font-semibold text-star">
+            Super<span className="flare-text">Nova</span>
+          </span>
+          <p className="text-[10px] uppercase tracking-widest text-muted">Seller</p>
+        </div>
+        <button
+          onClick={() => setMobileOpen((v) => !v)}
+          className="text-star"
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        >
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </header>
+
+      {mobileOpen && (
+        <nav className="flex flex-col gap-1 border-b border-border-soft p-4 md:hidden">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/seller/dashboard' || to === '/seller/products'}
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  isActive ? 'bg-surface-raised text-star' : 'text-muted hover:text-star'
+                }`
+              }
+            >
+              <Icon size={16} /> {label}
+            </NavLink>
+          ))}
+          <button
+            onClick={handleLogout}
+            className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-flare-hot hover:bg-surface-raised"
+          >
+            <LogOut size={16} /> Log out
+          </button>
+        </nav>
+      )}
+
       <aside className="hidden w-60 shrink-0 border-r border-border-soft p-5 md:block">
         <span className="font-display text-lg font-semibold text-star">
           Super<span className="flare-text">Nova</span>
@@ -58,7 +105,7 @@ export default function SellerLayout() {
         </nav>
       </aside>
 
-      <main className="flex-1 p-5 sm:p-8">
+      <main className="flex-1 min-w-0 p-5 sm:p-8">
         <Outlet />
       </main>
     </div>

@@ -118,15 +118,15 @@ export default function Cart() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-1 flex-col justify-between">
+                  <div className="flex min-w-0 flex-1 flex-col justify-between">
                     <div className="flex items-start justify-between gap-3">
-                      <Link to={`/products/${item.productId}`} className="text-sm text-star hover:text-flare-hot">
+                      <Link to={`/products/${item.productId}`} className="min-w-0 break-words text-sm text-star hover:text-flare-hot">
                         {loadingDetails ? '…' : p?.title || 'Product unavailable'}
                       </Link>
                       <button
                         disabled={busy}
                         onClick={() => handleRemove(item.productId)}
-                        className="text-muted hover:text-flare-hot disabled:opacity-40"
+                        className="shrink-0 text-muted hover:text-flare-hot disabled:opacity-40"
                         aria-label="Remove item"
                       >
                         <Trash2 size={16} />
