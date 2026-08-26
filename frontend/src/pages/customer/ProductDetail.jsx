@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ImageOff, Minus, Plus, ShoppingCart, Zap, Store } from 'lucide-react';
+import { ImageOff, Minus, Plus, ShoppingCart, Zap, Store, ZoomIn } from 'lucide-react';
 import { productService } from '../../api/products';
 import { getErrorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../utils/format';
 import PageLoader from '../../components/PageLoader';
 import EmptyState from '../../components/EmptyState';
+import ImageLightbox from '../../components/ImageLightbox';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -20,6 +21,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
 
@@ -83,21 +85,37 @@ export default function ProductDetail() {
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <div className="grid gap-10 md:grid-cols-2">
         <div>
-          <div className="aspect-square w-full overflow-hidden rounded-lg border border-border-soft bg-surface">
+          <button
+            type="button"
+            onClick={() => images[activeImage] && setLightboxOpen(true)}
+            className="group relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-border-soft bg-surface"
+          >
             {images[activeImage] ? (
-              <img src={images[activeImage].url} alt={product.title} className="h-full w-full object-cover" />
+              <>
+                <img
+                  src={images[activeImage].url}
+                  alt={product.title}
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-xs text-star opacity-0 transition-opacity group-hover:opacity-100">
+                  <ZoomIn size={14} /> Click to zoom
+                </span>
+              </>
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted">
                 <ImageOff size={40} />
               </div>
             )}
-          </div>
+          </button>
           {images.length > 1 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {images.map((img, i) => (
                 <button
                   key={img.id || i}
-                  onClick={() => setActiveImage(i)}
+                  onClick={() => {
+                    setActiveImage(i);
+                    setLightboxOpen(true);
+                  }}
                   className={`h-16 w-16 overflow-hidden rounded-md border ${
                     i === activeImage ? 'border-flare-hot' : 'border-border-soft'
                   }`}
@@ -174,6 +192,16 @@ export default function ProductDetail() {
           </Link>
         </div>
       </div>
+
+      {lightboxOpen && (
+        <ImageLightbox
+          images={images}
+          activeIndex={activeImage}
+          onChangeIndex={setActiveImage}
+          onClose={() => setLightboxOpen(false)}
+          alt={product.title}
+        />
+      )}
     </div>
   );
 }
